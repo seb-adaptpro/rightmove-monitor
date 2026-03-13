@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -12,6 +13,7 @@ from bs4 import BeautifulSoup
 CONFIG_PATH = Path("config.json")
 SEEN_PATH = Path("seen_listings.json")
 REPORT_PATH = Path("latest_report.md")
+REPORTS_DIR = Path("reports")
 
 USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -84,14 +86,22 @@ def extract_listings(html: str) -> list[dict]:
     listings: list[dict] = []
     seen = set()
 
-    cards = soup.find_all(["article", "div"], class_=re.compile(r"property|card|result", re.I))
+    cards = soup.find_all(
+        ["article", "div"],
+        class_=re.compile(r"property|card|result", re.I),
+    )
 
     for card in cards:
         text = clean_text(card.get_text(" "))
         if not text:
             continue
 
-        anchor = card.find("a", href=re.compile(r"/properties/\d+|https://www\.rightmove\.co\.uk/properties/\d+"))
+        anchor = card.find(
+            "a",
+            href=re.compile(
+                r"/properties/\d+|https://www\.rightmove\.co\.uk/properties/\d+"
+            ),
+        )
         if not anchor:
             continue
 
@@ -165,21 +175,26 @@ def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
             reasons.append(f"less preferred type: {prop_type}")
 
     matched_locations = [
-        loc for loc in criteria.get("preferred_locations", []) if loc.lower() in text
+        loc for loc in criteria.get("preferred_locations", [])
+        if loc.lower() in text
     ]
     if matched_locations:
         score += 8 + len(matched_locations)
         reasons.append("location match")
 
     nice_to_have = [
-        keyword for keyword in criteria.get("nice_to_have_keywords", []) if keyword.lower() in text
+        keyword
+        for keyword in criteria.get("nice_to_have_keywords", [])
+        if keyword.lower() in text
     ]
     if nice_to_have:
         score += 6 * len(nice_to_have)
         reasons.append("signals: " + ", ".join(nice_to_have[:4]))
 
     must_have = criteria.get("must_include_keywords", [])
-    missing_must_have = [keyword for keyword in must_have if keyword.lower() not in text]
+    missing_must_have = [
+        keyword for keyword in must_have if keyword.lower() not in text
+    ]
     if must_have:
         if missing_must_have:
             score -= 20
@@ -189,7 +204,9 @@ def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
             reasons.append("all must-haves present")
 
     excluded = [
-        keyword for keyword in criteria.get("exclude_keywords", []) if keyword.lower() in text
+        keyword
+        for keyword in criteria.get("exclude_keywords", [])
+        if keyword.lower() in text
     ]
     if excluded:
         score -= 100
@@ -231,6 +248,17 @@ def send_telegram_message(token: str, chat_id: str, text: str) -> None:
     ).raise_for_status()
 
 
+def save_reports(report_text: str) -> Path:
+    REPORTS_DIR.mkdir(exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+    dated_report_path = REPORTS_DIR / f"report_{timestamp}.md"
+
+    REPORT_PATH.write_text(report_text, encoding="utf-8")
+    dated_report_path.write_text(report_text, encoding="utf-8")
+
+    return dated_report_path
+
+
 def main() -> None:
     config = load_json(CONFIG_PATH, {})
     criteria = config.get("criteria", {})
@@ -263,17 +291,28 @@ def main() -> None:
 
     threshold = criteria.get("min_score_to_report", 15)
     new_matches = [
-        item for item in scored if item["score"] >= threshold and item["url"] not in seen_urls
+        item
+        for item in scored
+        if item["score"] >= threshold and item["url"] not in seen_urls
     ]
 
-    REPORT_PATH.write_text(format_markdown(new_matches), encoding="utf-8")
+    report_text = format_markdown(new_matches)
+    dated_report_path = save_reports(report_text)
 
     for item in new_matches:
         seen_urls.add(item["url"])
     save_json(SEEN_PATH, sorted(seen_urls))
 
-    telegram_token = Path(".telegram_token").read_text(encoding="utf-8").strip() if Path(".telegram_token").exists() else ""
-    telegram_chat_id = Path(".telegram_chat_id").read_text(encoding="utf-8").strip() if Path(".telegram_chat_id").exists() else ""
+    telegram_token = (
+        Path(".telegram_token").read_text(encoding="utf-8").strip()
+        if Path(".telegram_token").exists()
+        else ""
+    )
+    telegram_chat_id = (
+        Path(".telegram_chat_id").read_text(encoding="utf-8").strip()
+        if Path(".telegram_chat_id").exists()
+        else ""
+    )
 
     if new_matches and telegram_token and telegram_chat_id:
         chunks = []
@@ -289,10 +328,17 @@ def main() -> None:
                     ]
                 )
             )
-        message = "New Rightmove matches\n\n" + "\n\n".join(chunks)
+
+        message = (
+            "New Rightmove matches\n\n"
+            + "\n\n".join(chunks)
+            + f"\n\nSaved report: {dated_report_path}"
+        )
         send_telegram_message(telegram_token, telegram_chat_id, message)
 
-    print(format_markdown(new_matches))
+    print(report_text)
+    print(f"Saved latest report to: {REPORT_PATH}")
+    print(f"Saved dated report to: {dated_report_path}")
 
 
 if __name__ == "__main__":
