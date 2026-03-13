@@ -8,7 +8,7 @@
     "https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=Oxford%2C+Oxfordshire&useLocationIdentifier=true&locationIdentifier=REGION%5E1036&buy=For+sale&radius=5.0&_includeSSTC=on"
   ],
   "criteria": {
-    "max_price": null,
+    "max_price": 350000,
     "min_bedrooms": 2,
     "max_bedrooms": null,
     "preferred_locations": [
@@ -42,6 +42,6 @@
       "retirement"
     ],
     "max_results_per_search": 100,
-    "min_score_to_report": 25
+    "min_score_to_report": 15
   }
 }

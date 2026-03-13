@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 CONFIG_PATH = Path("config.json")
 SEEN_PATH = Path("seen_listings.json")
 REPORT_PATH = Path("latest_report.md")
+NEW_REPORT_PATH = Path("latest_new_matches.md")
 REPORTS_DIR = Path("reports")
 
 USER_AGENT = (
@@ -46,7 +47,15 @@ def parse_price(text: str) -> Optional[int]:
 
 
 def parse_bedrooms(text: str) -> Optional[int]:
-    patterns = [r"(\d+)\s+bed", r"(\d+)\s+bedroom"]
+    if not text:
+        return None
+
+    patterns = [
+        r"(\d+)\s+bedroom",
+        r"(\d+)\s+bed",
+        r"(\d+)-bedroom",
+        r"(\d+)-bed",
+    ]
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE)
         if match:
@@ -129,15 +138,85 @@ def extract_listings(html: str) -> list[dict]:
                 "price_value": parse_price(price_text),
                 "bedrooms": parse_bedrooms(text),
                 "property_type": infer_property_type(text),
-                "text": text[:2000],
+                "address": "",
+                "summary_text": text[:2000],
+                "detail_text": "",
             }
         )
 
     return listings
 
 
+def extract_address_from_detail_page(soup: BeautifulSoup) -> str:
+    selectors = [
+        "h1",
+        "[data-testid='address-label']",
+        "[itemprop='streetAddress']",
+        ".dpdkjz-4",
+        ".fs-22",
+    ]
+    for selector in selectors:
+        node = soup.select_one(selector)
+        if node:
+            text = clean_text(node.get_text(" "))
+            if text and len(text) > 5:
+                return text
+
+    page_text = clean_text(soup.get_text(" "))
+    patterns = [
+        r"Added today\s+(.*?)\s+£[\d,]+",
+        r"Added yesterday\s+(.*?)\s+£[\d,]+",
+        r"for sale\s+in\s+(.*?)\s+£[\d,]+",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, page_text, flags=re.IGNORECASE)
+        if match:
+            return clean_text(match.group(1))
+
+    return ""
+
+
+def enrich_listing_details(item: dict) -> dict:
+    try:
+        html = fetch_html(item["url"])
+        soup = BeautifulSoup(html, "lxml")
+        detail_text = clean_text(soup.get_text(" "))
+
+        address = extract_address_from_detail_page(soup)
+        detail_bedrooms = parse_bedrooms(detail_text)
+        detail_property_type = infer_property_type(detail_text)
+
+        item["address"] = address or item.get("address", "")
+        item["detail_text"] = detail_text[:12000]
+
+        if detail_bedrooms is not None:
+            item["bedrooms"] = detail_bedrooms
+
+        if detail_property_type:
+            item["property_type"] = detail_property_type
+
+        if item.get("price_value") is None:
+            detail_price_match = re.search(r"£\s*[\d,]+", detail_text)
+            if detail_price_match:
+                item["price_text"] = detail_price_match.group(0)
+                item["price_value"] = parse_price(item["price_text"])
+
+    except Exception as exc:
+        print(f"Failed to enrich {item['url']}: {exc}")
+
+    return item
+
+
 def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
-    text = f"{item.get('title', '')} {item.get('text', '')}".lower()
+    text = " ".join(
+        [
+            item.get("title", ""),
+            item.get("address", ""),
+            item.get("summary_text", ""),
+            item.get("detail_text", ""),
+        ]
+    ).lower()
+
     score = 0
     reasons: list[str] = []
 
@@ -149,10 +228,10 @@ def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
     elif price_value is not None and max_price is not None:
         if price_value <= max_price:
             score += 20
-            reasons.append("within budget")
+            reasons.append(f"within budget ({item['price_text']})")
         else:
-            score -= 50
-            reasons.append("over budget")
+            score -= 200
+            reasons.append(f"over budget ({item['price_text']})")
 
     min_bedrooms = criteria.get("min_bedrooms")
     bedrooms = item.get("bedrooms")
@@ -161,7 +240,7 @@ def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
             score += 12
             reasons.append(f"{bedrooms} bedrooms")
         else:
-            score -= 20
+            score -= 30
             reasons.append(f"only {bedrooms} bedrooms")
 
     prop_type = (item.get("property_type") or "").lower()
@@ -210,6 +289,9 @@ def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
         "investment opportunity": 18,
         "priced to sell": 14,
         "tenant in situ": 10,
+        "renovation project": 20,
+        "development opportunity": 18,
+        "in need of renovation": 24,
     }
 
     matched_signals = []
@@ -283,6 +365,7 @@ def format_markdown(matches: list[dict], title: str) -> str:
     for i, item in enumerate(matches, start=1):
         lines += [
             f"## {i}. {item['title']}",
+            f"- Address: {item.get('address') or 'Address not found'}",
             f"- Score: **{item['score']}**",
             f"- Price: {item['price_text']}",
             f"- Bedrooms: {item.get('bedrooms', 'Unknown')}",
@@ -315,7 +398,7 @@ def save_reports(all_report_text: str, new_report_text: str) -> tuple[Path, Path
     dated_new_report_path = REPORTS_DIR / f"new_matches_{timestamp}.md"
 
     REPORT_PATH.write_text(all_report_text, encoding="utf-8")
-    Path("latest_new_matches.md").write_text(new_report_text, encoding="utf-8")
+    NEW_REPORT_PATH.write_text(new_report_text, encoding="utf-8")
 
     dated_all_report_path.write_text(all_report_text, encoding="utf-8")
     dated_new_report_path.write_text(new_report_text, encoding="utf-8")
@@ -335,7 +418,13 @@ def main() -> None:
         try:
             html = fetch_html(url)
             items = extract_listings(html)
-            all_items.extend(items)
+
+            enriched_items = []
+            for item in items:
+                enriched_items.append(enrich_listing_details(item))
+                time.sleep(0.5)
+
+            all_items.extend(enriched_items)
             time.sleep(1)
         except Exception as exc:
             print(f"Failed to fetch {url}: {exc}")
@@ -354,8 +443,17 @@ def main() -> None:
     scored.sort(key=lambda x: x["score"], reverse=True)
 
     threshold = criteria.get("min_score_to_report", 25)
+    max_price = criteria.get("max_price")
 
-    all_matches = [item for item in scored if item["score"] >= threshold]
+    all_matches = []
+    for item in scored:
+        if item["score"] < threshold:
+            continue
+        if max_price is not None and item.get("price_value") is not None:
+            if item["price_value"] > max_price:
+                continue
+        all_matches.append(item)
+
     new_matches = [item for item in all_matches if item["url"] not in seen_urls]
 
     all_report_text = format_markdown(
@@ -394,7 +492,9 @@ def main() -> None:
                 "\n".join(
                     [
                         f"{item['title']}",
+                        f"Address: {item.get('address') or 'Address not found'}",
                         f"Price: {item['price_text']}",
+                        f"Bedrooms: {item.get('bedrooms', 'Unknown')}",
                         f"Score: {item['score']}",
                         f"Why: {', '.join(item['reasons'][:3])}",
                         item["url"],
@@ -413,7 +513,7 @@ def main() -> None:
     print()
     print(new_report_text)
     print(f"Saved latest all-matches report to: {REPORT_PATH}")
-    print("Saved latest new-matches report to: latest_new_matches.md")
+    print(f"Saved latest new-matches report to: {NEW_REPORT_PATH}")
     print(f"Saved dated all-matches report to: {dated_all_report_path}")
     print(f"Saved dated new-matches report to: {dated_new_report_path}")
 
