@@ -37,7 +37,7 @@ jobs:
         run: python property_agent.py
 
       - name: Upload run report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: property-report-${{ github.run_number }}
           path: |
