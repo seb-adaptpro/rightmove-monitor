@@ -1,0 +1,47 @@
+{
+  "search_urls": [
+    "https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=Milton+Keynes%2C+Buckinghamshire&useLocationIdentifier=true&locationIdentifier=REGION%5E940&buy=For+sale&radius=5.0&_includeSSTC=on",
+    "https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=Northampton%2C+Northamptonshire&useLocationIdentifier=true&locationIdentifier=REGION%5E1014&buy=For+sale&radius=5.0&_includeSSTC=on",
+    "https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=Bedford%2C+Bedfordshire&useLocationIdentifier=true&locationIdentifier=REGION%5E129&buy=For+sale&radius=5.0&_includeSSTC=on",
+    "https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=Kettering%2C+Northamptonshire&useLocationIdentifier=true&locationIdentifier=REGION%5E732&buy=For+sale&radius=5.0&_includeSSTC=on",
+    "https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=Corby%2C+Northamptonshire&useLocationIdentifier=true&locationIdentifier=REGION%5E361&buy=For+sale&radius=5.0&_includeSSTC=on",
+    "https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=Oxford%2C+Oxfordshire&useLocationIdentifier=true&locationIdentifier=REGION%5E1036&buy=For+sale&radius=5.0&_includeSSTC=on"
+  ],
+  "criteria": {
+    "max_price": null,
+    "min_bedrooms": 2,
+    "max_bedrooms": null,
+    "preferred_locations": [
+      "Milton Keynes",
+      "Northampton",
+      "Bedford",
+      "Kettering",
+      "Corby",
+      "Oxford"
+    ],
+    "property_types": [
+      "semi-detached",
+      "terraced",
+      "detached",
+      "bungalow"
+    ],
+    "must_include_keywords": [],
+    "nice_to_have_keywords": [
+      "cash",
+      "probate",
+      "chain-free",
+      "no chain",
+      "reduced",
+      "motivated seller",
+      "vacant",
+      "must sell",
+      "executor"
+    ],
+    "exclude_keywords": [
+      "shared ownership",
+      "retirement"
+    ],
+    "max_results_per_search": 60,
+    "min_score_to_report": 15
+  }
+}
