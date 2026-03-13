@@ -41,7 +41,7 @@
       "shared ownership",
       "retirement"
     ],
-    "max_results_per_search": 60,
-    "min_score_to_report": 15
+    "max_results_per_search": 100,
+    "min_score_to_report": 25
   }
 }

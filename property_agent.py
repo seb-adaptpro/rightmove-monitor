@@ -129,7 +129,7 @@ def extract_listings(html: str) -> list[dict]:
                 "price_value": parse_price(price_text),
                 "bedrooms": parse_bedrooms(text),
                 "property_type": infer_property_type(text),
-                "text": text[:1200],
+                "text": text[:2000],
             }
         )
 
@@ -182,14 +182,53 @@ def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
         score += 8 + len(matched_locations)
         reasons.append("location match")
 
+    investment_signals = {
+        "probate": 20,
+        "executor": 20,
+        "executor sale": 22,
+        "no chain": 14,
+        "chain free": 14,
+        "chain-free": 14,
+        "vacant": 16,
+        "vacant possession": 18,
+        "reduced": 10,
+        "price reduced": 12,
+        "motivated seller": 18,
+        "must sell": 22,
+        "quick sale": 14,
+        "cash buyers": 16,
+        "cash buyer": 16,
+        "auction": 18,
+        "for auction": 20,
+        "modernisation required": 22,
+        "in need of modernisation": 24,
+        "requires modernisation": 22,
+        "refurbishment required": 24,
+        "requires refurbishment": 24,
+        "updating required": 16,
+        "in need of improvement": 18,
+        "investment opportunity": 18,
+        "priced to sell": 14,
+        "tenant in situ": 10,
+    }
+
+    matched_signals = []
+    for keyword, weight in investment_signals.items():
+        if keyword in text:
+            score += weight
+            matched_signals.append(keyword)
+
+    if matched_signals:
+        reasons.append("investment signals: " + ", ".join(matched_signals[:5]))
+
     nice_to_have = [
         keyword
         for keyword in criteria.get("nice_to_have_keywords", [])
         if keyword.lower() in text
     ]
     if nice_to_have:
-        score += 6 * len(nice_to_have)
-        reasons.append("signals: " + ", ".join(nice_to_have[:4]))
+        score += 4 * len(nice_to_have)
+        reasons.append("config signals: " + ", ".join(nice_to_have[:4]))
 
     must_have = criteria.get("must_include_keywords", [])
     missing_must_have = [
@@ -212,13 +251,33 @@ def score_listing(item: dict, criteria: dict) -> tuple[int, list[str]]:
         score -= 100
         reasons.append("excluded: " + ", ".join(excluded))
 
+    negative_signals = {
+        "flat": -6,
+        "apartment": -6,
+        "leasehold": -8,
+        "over 55": -40,
+        "retirement": -100,
+        "shared ownership": -100,
+        "park home": -80,
+        "holiday home": -60,
+    }
+
+    negative_hits = []
+    for keyword, penalty in negative_signals.items():
+        if keyword in text:
+            score += penalty
+            negative_hits.append(keyword)
+
+    if negative_hits:
+        reasons.append("negative signals: " + ", ".join(negative_hits[:4]))
+
     return score, reasons
 
 
-def format_markdown(matches: list[dict]) -> str:
-    lines = ["# Rightmove investment shortlist", ""]
+def format_markdown(matches: list[dict], title: str) -> str:
+    lines = [f"# {title}", ""]
     if not matches:
-        lines.append("No new qualifying listings found.")
+        lines.append("No qualifying listings found.")
         return "\n".join(lines)
 
     for i, item in enumerate(matches, start=1):
@@ -248,15 +307,20 @@ def send_telegram_message(token: str, chat_id: str, text: str) -> None:
     ).raise_for_status()
 
 
-def save_reports(report_text: str) -> Path:
+def save_reports(all_report_text: str, new_report_text: str) -> tuple[Path, Path]:
     REPORTS_DIR.mkdir(exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
-    dated_report_path = REPORTS_DIR / f"report_{timestamp}.md"
 
-    REPORT_PATH.write_text(report_text, encoding="utf-8")
-    dated_report_path.write_text(report_text, encoding="utf-8")
+    dated_all_report_path = REPORTS_DIR / f"all_matches_{timestamp}.md"
+    dated_new_report_path = REPORTS_DIR / f"new_matches_{timestamp}.md"
 
-    return dated_report_path
+    REPORT_PATH.write_text(all_report_text, encoding="utf-8")
+    Path("latest_new_matches.md").write_text(new_report_text, encoding="utf-8")
+
+    dated_all_report_path.write_text(all_report_text, encoding="utf-8")
+    dated_new_report_path.write_text(new_report_text, encoding="utf-8")
+
+    return dated_all_report_path, dated_new_report_path
 
 
 def main() -> None:
@@ -289,15 +353,24 @@ def main() -> None:
 
     scored.sort(key=lambda x: x["score"], reverse=True)
 
-    threshold = criteria.get("min_score_to_report", 15)
-    new_matches = [
-        item
-        for item in scored
-        if item["score"] >= threshold and item["url"] not in seen_urls
-    ]
+    threshold = criteria.get("min_score_to_report", 25)
 
-    report_text = format_markdown(new_matches)
-    dated_report_path = save_reports(report_text)
+    all_matches = [item for item in scored if item["score"] >= threshold]
+    new_matches = [item for item in all_matches if item["url"] not in seen_urls]
+
+    all_report_text = format_markdown(
+        all_matches,
+        "Rightmove investment shortlist - all current matches",
+    )
+    new_report_text = format_markdown(
+        new_matches,
+        "Rightmove investment shortlist - new matches",
+    )
+
+    dated_all_report_path, dated_new_report_path = save_reports(
+        all_report_text,
+        new_report_text,
+    )
 
     for item in new_matches:
         seen_urls.add(item["url"])
@@ -332,13 +405,17 @@ def main() -> None:
         message = (
             "New Rightmove matches\n\n"
             + "\n\n".join(chunks)
-            + f"\n\nSaved report: {dated_report_path}"
+            + f"\n\nSaved reports:\n{dated_new_report_path}\n{dated_all_report_path}"
         )
         send_telegram_message(telegram_token, telegram_chat_id, message)
 
-    print(report_text)
-    print(f"Saved latest report to: {REPORT_PATH}")
-    print(f"Saved dated report to: {dated_report_path}")
+    print(all_report_text)
+    print()
+    print(new_report_text)
+    print(f"Saved latest all-matches report to: {REPORT_PATH}")
+    print("Saved latest new-matches report to: latest_new_matches.md")
+    print(f"Saved dated all-matches report to: {dated_all_report_path}")
+    print(f"Saved dated new-matches report to: {dated_new_report_path}")
 
 
 if __name__ == "__main__":
