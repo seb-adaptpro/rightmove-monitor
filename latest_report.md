@@ -1,10 +1,10 @@
 # Rightmove investment shortlist - all current matches
 
-## 1. | | 1/13
-- Address: Moore Close, Four Oaks, Sutton Coldfield, B74 BEAUTIFULLY PRESENTED
-- Score: **39**
-- Price: £215,000
+## 1. | 1/13
+- Address: Grosvenor Road, Kettering, Northamptonshire
+- Score: **80**
+- Price: £190,000
 - Bedrooms: 2
-- Type: house
-- Why it matched: within budget (£215,000), 2 bedrooms, less preferred type: house, location match, investment signals: reduced, config signals: reduced, negative signals: leasehold
-- Link: https://www.rightmove.co.uk/properties/171310877#/?channel=RES_BUY
+- Type: semi-detached
+- Why it matched: within budget (£190,000), 2 bedrooms, semi-detached, location match, investment signals: reduced, motivated seller, config signals: reduced, motivated seller, negative signals: leasehold
+- Link: https://www.rightmove.co.uk/properties/92211186#/?channel=RES_BUY
