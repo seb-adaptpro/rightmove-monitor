@@ -1,10 +1,10 @@
 # Rightmove investment shortlist - new matches
 
-## 1. | | 1/41
-- Address: Longstone Road, Great Barr, Birmingham, B42 LANDSCAPED GARDEN
-- Score: **41**
-- Price: £250,000
-- Bedrooms: 3
-- Type: semi-detached
-- Why it matched: within budget (£250,000), 3 bedrooms, semi-detached, location match, negative signals: leasehold
-- Link: https://www.rightmove.co.uk/properties/95271138#/?channel=RES_BUY
+## 1. | | 1/10
+- Address: Hartwell Road, Milton Keynes, Buckinghamshire
+- Score: **83**
+- Price: £260,000
+- Bedrooms: 2
+- Type: terraced
+- Why it matched: within budget (£260,000), 2 bedrooms, terraced, location match, investment signals: reduced, motivated seller, config signals: cash, reduced, motivated seller, negative signals: leasehold
+- Link: https://www.rightmove.co.uk/properties/95010036#/?channel=RES_BUY
