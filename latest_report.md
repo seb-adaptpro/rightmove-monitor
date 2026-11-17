@@ -1,10 +1,10 @@
 # Rightmove investment shortlist - all current matches
 
-## 1. | | 1/8
-- Address: Cranford Road, Barton Seagrave, NN15 5JN
-- Score: **46**
-- Price: £240,000
-- Bedrooms: 2
+## 1. | 1/15
+- Address: Falcutt Way, Northampton
+- Score: **59**
+- Price: £300,000
+- Bedrooms: 3
 - Type: semi-detached
-- Why it matched: within budget (£240,000), 2 bedrooms, semi-detached, location match, config signals: cash, negative signals: leasehold
-- Link: https://www.rightmove.co.uk/properties/94685247#/?channel=RES_BUY
+- Why it matched: within budget (£300,000), 3 bedrooms, semi-detached, location match, investment signals: development opportunity, negative signals: leasehold
+- Link: https://www.rightmove.co.uk/properties/95493903#/?channel=RES_BUY
