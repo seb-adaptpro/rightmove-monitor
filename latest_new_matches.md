@@ -1,10 +1,10 @@
 # Rightmove investment shortlist - new matches
 
-## 1. | 1/21
-- Address: Carlisle Close, Corby
-- Score: **61**
-- Price: £224,950
+## 1. | 1/36
+- Address: William Kerr Road, Tipton DY4
+- Score: **41**
+- Price: £270,000
 - Bedrooms: 3
-- Type: terraced
-- Why it matched: within budget (£224,950), 3 bedrooms, terraced, location match, investment signals: no chain, config signals: no chain, negative signals: leasehold
-- Link: https://www.rightmove.co.uk/properties/94915266#/?channel=RES_BUY
+- Type: semi-detached
+- Why it matched: within budget (£270,000), 3 bedrooms, semi-detached, location match, negative signals: leasehold
+- Link: https://www.rightmove.co.uk/properties/91994571#/?channel=RES_BUY
