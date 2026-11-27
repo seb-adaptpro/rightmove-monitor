@@ -1,19 +1,10 @@
 # Rightmove investment shortlist - new matches
 
-## 1. | 1/11
-- Address: Hindlip Close, Winyates Green, Redditch, Worcestershire, B98
-- Score: **41**
-- Price: £290,000
-- Bedrooms: 3
+## 1. | | 1/25
+- Address: Netherfield Road, Kettering NN15
+- Score: **42**
+- Price: £270,000
+- Bedrooms: 4
 - Type: semi-detached
-- Why it matched: within budget (£290,000), 3 bedrooms, semi-detached, location match, negative signals: leasehold
-- Link: https://www.rightmove.co.uk/properties/95688735#/?channel=RES_BUY
-
-## 2. | 1/9
-- Address: Turner Drive, Oxford, OX2
-- Score: **27**
-- Price: £275,000
-- Bedrooms: 2
-- Type: house
-- Why it matched: within budget (£275,000), 2 bedrooms, less preferred type: house, location match, investment signals: reduced, config signals: reduced, negative signals: flat, apartment, leasehold
-- Link: https://www.rightmove.co.uk/properties/174582149#/?channel=RES_BUY
+- Why it matched: within budget (£270,000), 4 bedrooms, semi-detached, location match, negative signals: leasehold
+- Link: https://www.rightmove.co.uk/properties/95656458#/?channel=RES_BUY
