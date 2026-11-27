@@ -1,10 +1,10 @@
 # Rightmove investment shortlist - new matches
 
-## 1. | | 1/25
-- Address: Netherfield Road, Kettering NN15
-- Score: **42**
-- Price: £270,000
-- Bedrooms: 4
-- Type: semi-detached
-- Why it matched: within budget (£270,000), 4 bedrooms, semi-detached, location match, negative signals: leasehold
-- Link: https://www.rightmove.co.uk/properties/95656458#/?channel=RES_BUY
+## 1. | | 1/20
+- Address: Wellington Place, Willenhall, WV13
+- Score: **41**
+- Price: £160,000
+- Bedrooms: 2
+- Type: terraced
+- Why it matched: within budget (£160,000), 2 bedrooms, terraced, location match, negative signals: leasehold
+- Link: https://www.rightmove.co.uk/properties/95832849#/?channel=RES_BUY
