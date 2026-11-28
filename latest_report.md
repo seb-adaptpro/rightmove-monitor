@@ -1,10 +1,10 @@
 # Rightmove investment shortlist - all current matches
 
-## 1. | | 1/20
-- Address: Wellington Place, Willenhall, WV13
-- Score: **41**
-- Price: £160,000
+## 1. | 1/11
+- Address: Clare Road, Wellingborough
+- Score: **80**
+- Price: £190,000
 - Bedrooms: 2
-- Type: terraced
-- Why it matched: within budget (£160,000), 2 bedrooms, terraced, location match, negative signals: leasehold
-- Link: https://www.rightmove.co.uk/properties/95832849#/?channel=RES_BUY
+- Type: semi-detached
+- Why it matched: within budget (£190,000), 2 bedrooms, semi-detached, location match, investment signals: vacant, reduced, config signals: cash, reduced, vacant, negative signals: leasehold
+- Link: https://www.rightmove.co.uk/properties/95771529#/?channel=RES_BUY
